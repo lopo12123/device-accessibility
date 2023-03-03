@@ -13,18 +13,27 @@ export interface ExtraKey {
 export interface KeyCombination {
   /** 目标键 (可用值见 mapper 文件) */
   key: string
-  /** 辅助键 (ctrl / shift / alt 中的 0/1 个) */
-  extra?: 'ctrl' | 'alt' | 'shift'
+  /** 辅助键 见[ExtraKey] */
+  extra?: ExtraKey
 }
 export function helloWorld(): string
+/** 键盘控制类 (监听 + 模拟) */
 export class KeyboardController {
   constructor()
+  /** 已注册的按键 */
+  get registered(): Array<KeyCombination>
   /**
    * 模拟目标按键
    * `key` 目标键 (可用值见 mapper 文件)
    * `extra` 辅助键 (ctrl / shift / alt 中的 0/1/2/3 个)
    */
-  simulate(key: string, extra?: ExtraKey | undefined | null): void
-  /** 监听目标 */
-  listen(channel: KeyCombination, executor: (...args: any[]) => any): void
+  simulate(keys: KeyCombination): void
+  /** 注册按键监听事件 (支持组合键) */
+  listen(keys: KeyCombination, executor: (...args: any[]) => any): boolean
+  /** 更新(不存在则回退为注册)监听目标的响应执行函数 */
+  update(keys: KeyCombination, executor: (...args: any[]) => any): boolean
+  /** 取消已注册的监听 */
+  unlisten(keys: KeyCombination): void
+  /** 主动触发已注册的按键事件 */
+  touch(keys: KeyCombination): boolean
 }
