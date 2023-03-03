@@ -1,0 +1,18 @@
+{
+  "name": "@lopo/device-accessibility-win32-arm64-msvc",
+  "version": "0.0.0",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "device-accessibility.win32-arm64-msvc.node",
+  "files": [
+    "device-accessibility.win32-arm64-msvc.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}

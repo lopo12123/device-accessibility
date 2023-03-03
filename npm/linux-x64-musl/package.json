@@ -1,0 +1,21 @@
+{
+  "name": "@lopo/device-accessibility-linux-x64-musl",
+  "version": "0.0.0",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "main": "device-accessibility.linux-x64-musl.node",
+  "files": [
+    "device-accessibility.linux-x64-musl.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "libc": [
+    "musl"
+  ]
+}

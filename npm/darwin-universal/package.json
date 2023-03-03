@@ -1,0 +1,15 @@
+{
+  "name": "@lopo/device-accessibility-darwin-universal",
+  "version": "0.0.0",
+  "os": [
+    "darwin"
+  ],
+  "main": "device-accessibility.darwin-universal.node",
+  "files": [
+    "device-accessibility.darwin-universal.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  }
+}
