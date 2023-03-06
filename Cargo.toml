@@ -7,11 +7,13 @@ version = "0.0.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-device_query = "1.1.1"
-enigo = { git = "https://github.com/enigo-rs/enigo.git" }
 # Default enable napi4 feature, see https://nodejs.org/api/n-api.html#node-api-version-matrix
 napi = { version = "2.11.1", default-features = false, features = ["napi4"] }
 napi-derive = "2.11.0"
+
+device_query = "1.1.1"
+enigo = { git = "https://github.com/enigo-rs/enigo.git" }
+rdev = "0.5.2"
 
 [build-dependencies]
 napi-build = "2.0.1"

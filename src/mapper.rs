@@ -1,5 +1,5 @@
-use device_query::{Keycode as DqKey, MouseButton as DqButton};
-use enigo::{Key as EnigoKey, MouseButton as EnigoButton};
+use device_query::{Keycode as DqKey, MouseButton as DqMouse};
+use enigo::{Key as EnigoKey, MouseButton as EnigoMouse};
 
 // region keyboard mapper
 pub struct KeyboardMapper {}
@@ -596,80 +596,68 @@ impl KeyboardMapper {
 // endregion
 
 // region mouse mapper
-// pub struct MouseMapper {}
-//
-// #[allow(unused)]
-// impl MouseMapper {
-//     /// parse custom enum `MouseEventName` to `(EnigoButton, is_press)`
-//     pub fn parse_ev_name(ev_name: MouseEventName) -> (EnigoButton, bool) {
-//         match ev_name {
-//             MouseEventName::LeftDown => (EnigoButton::Left, true),
-//             MouseEventName::LeftUp => (EnigoButton::Left, false),
-//             MouseEventName::RightDown => (EnigoButton::Right, false),
-//             MouseEventName::RightUp => (EnigoButton::Right, false),
-//             MouseEventName::MidDown => (EnigoButton::Middle, false),
-//             MouseEventName::MidUp => (EnigoButton::Middle, false),
-//         }
-//     }
-//
-//     /// `MouseButton` in `device_query` => `MouseButton` in `Enigo`
-//     pub fn dq_to_enigo(button_in_dq: DqButton) -> Option<EnigoButton> {
-//         match button_in_dq {
-//             1 => Some(EnigoButton::Left),
-//             2 => Some(EnigoButton::Right),
-//             3 => Some(EnigoButton::Middle),
-//             _ => None
-//         }
-//     }
-//
-//     /// `MouseButton` in `Enigo` => `MouseButton` in `device_query`
-//     pub fn enigo_to_dq(button_in_enigo: EnigoButton) -> Option<DqButton> {
-//         match button_in_enigo {
-//             EnigoButton::Left => Some(1),
-//             EnigoButton::Right => Some(2),
-//             EnigoButton::Middle => Some(3),
-//             _ => None
-//         }
-//     }
-//
-//     /// `MouseButton` in `device_query` => `button` in frontend
-//     pub fn dq_to_front(button_in_dq: DqButton) -> Option<usize> {
-//         match button_in_dq {
-//             1 => Some(0),
-//             2 => Some(2),
-//             3 => Some(1),
-//             _ => None
-//         }
-//     }
-//
-//     /// `button` in frontend => `MouseButton` in `device_query`
-//     pub fn front_to_dq(code_in_front: usize) -> Option<DqButton> {
-//         match code_in_front {
-//             0 => Some(1),
-//             2 => Some(2),
-//             1 => Some(3),
-//             _ => None
-//         }
-//     }
-//
-//     /// `MouseButton` in `Enigo` => `button` in frontend
-//     pub fn enigo_to_front(button_in_enigo: EnigoButton) -> Option<usize> {
-//         match button_in_enigo {
-//             EnigoButton::Left => Some(0),
-//             EnigoButton::Right => Some(2),
-//             EnigoButton::Middle => Some(1),
-//             _ => None
-//         }
-//     }
-//
-//     /// `button` in frontend => `MouseButton` in `Enigo`
-//     pub fn front_to_enigo(code_in_front: usize) -> Option<EnigoButton> {
-//         match code_in_front {
-//             0 => Some(EnigoButton::Left),
-//             2 => Some(EnigoButton::Right),
-//             1 => Some(EnigoButton::Middle),
-//             _ => None
-//         }
-//     }
-// }
+pub struct MouseMapper {}
+
+#[allow(unused)]
+impl MouseMapper {
+    /// `MouseButton` in `device_query` => `MouseButton` in `Enigo`
+    pub fn dq_to_enigo(button_in_dq: DqMouse) -> Option<EnigoMouse> {
+        match button_in_dq {
+            1 => Some(EnigoMouse::Left),
+            2 => Some(EnigoMouse::Right),
+            3 => Some(EnigoMouse::Middle),
+            _ => None
+        }
+    }
+
+    /// `MouseButton` in `Enigo` => `MouseButton` in `device_query`
+    pub fn enigo_to_dq(button_in_enigo: EnigoMouse) -> Option<DqMouse> {
+        match button_in_enigo {
+            EnigoMouse::Left => Some(1),
+            EnigoMouse::Right => Some(2),
+            EnigoMouse::Middle => Some(3),
+            _ => None
+        }
+    }
+
+    /// `MouseButton` in `device_query` => `button` in frontend
+    pub fn dq_to_front(button_in_dq: DqMouse) -> Option<String> {
+        match button_in_dq {
+            1 => Some(String::from("Left")),
+            2 => Some(String::from("Right")),
+            3 => Some(String::from("Middle")),
+            _ => None
+        }
+    }
+
+    /// `button` in frontend => `MouseButton` in `device_query`
+    pub fn front_to_dq(code_in_front: String) -> Option<DqMouse> {
+        match &code_in_front[..] {
+            "Left" => Some(1),
+            "Right" => Some(2),
+            "Middle" => Some(3),
+            _ => None
+        }
+    }
+
+    /// `MouseButton` in `Enigo` => `button` in frontend
+    pub fn enigo_to_front(button_in_enigo: EnigoMouse) -> Option<String> {
+        match button_in_enigo {
+            EnigoMouse::Left => Some(String::from("Left")),
+            EnigoMouse::Right => Some(String::from("Right")),
+            EnigoMouse::Middle => Some(String::from("Middle")),
+            _ => None
+        }
+    }
+
+    /// `button` in frontend => `MouseButton` in `Enigo`
+    pub fn front_to_enigo(code_in_front: String) -> Option<EnigoMouse> {
+        match &code_in_front[..] {
+            "Left" => Some(EnigoMouse::Left),
+            "Right" => Some(EnigoMouse::Right),
+            "Middle" => Some(EnigoMouse::Middle),
+            _ => None
+        }
+    }
+}
 // endregion
