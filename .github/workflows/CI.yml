@@ -9,8 +9,6 @@ env:
       - master
     tags:
       - 'release_**'
-    tags-ignore:
-      - '**'
     paths-ignore:
       - '**/*.md'
       - LICENSE
