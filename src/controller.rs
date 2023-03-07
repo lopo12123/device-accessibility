@@ -196,4 +196,10 @@ mod unit_test {
         // thread::sleep(Duration::from_secs(1));
         // Controller::new().mouse_up("Right".to_string()).unwrap();
     }
+
+    #[test]
+    fn key_test2() {
+        thread::sleep(Duration::from_secs(2));
+        Enigo::new().key_click(EnigoKey::Meta);
+    }
 }
