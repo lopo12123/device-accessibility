@@ -50,9 +50,10 @@ impl Observer {
         Ok(_key_evs)
     }
 
-    #[napi]
-    pub fn thread_test(&self, executor: JsFunction) -> napi::Result<()> {
-        let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = executor
+    /// 跨线程调用 -- 安全测试
+    #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
+    pub fn tsfn_test(&self, callback: JsFunction) -> napi::Result<()> {
+        let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
             .create_threadsafe_function(0, |ctx| {
                 Ok(vec![ctx.value])
             })?;
@@ -72,6 +73,7 @@ impl Observer {
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(2));
             fn3.call(Ok(String::from("子线程3 -- sleep 2s")), ThreadsafeFunctionCallMode::NonBlocking);
+            fn3.call(Ok(String::from("子线程3 -- sleep 2s -- 多次调用")), ThreadsafeFunctionCallMode::NonBlocking);
         });
 
         Ok(())

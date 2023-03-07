@@ -71,7 +71,8 @@ export class Observer {
   constructor()
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeyEvents(): Array<KeyEv>
-  threadTest(executor: (...args: any[]) => any): void
+  /** 跨线程调用 -- 安全测试 */
+  tsfnTest(callback: (err: null | Error, result: string) => void): void
   /** 注册/更新按键监听事件 (支持组合键) */
   onKeys(keys: KeyEv, executor: (...args: any[]) => any): boolean
   /** 移除已注册的监听 */
