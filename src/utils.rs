@@ -3,8 +3,11 @@
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct ExtraKey {
     pub ctrl: Option<bool>,
+    /// windows/linux -- `alt`; macos -- `option`
     pub alt: Option<bool>,
     pub shift: Option<bool>,
+    /// windows -- `win`; linux -- `super`; macos -- `command`
+    pub meta: Option<bool>,
 }
 
 /// 组合键情况 (目标键 + 辅助键)

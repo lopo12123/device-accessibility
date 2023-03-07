@@ -48,12 +48,14 @@ impl Controller {
                 let mut _ctrl = false;
                 let mut _alt = false;
                 let mut _shift = false;
+                let mut _meta = false;
 
                 match keys.extra {
                     Some(v) => {
                         _ctrl = v.ctrl.is_some() && v.ctrl.unwrap();
                         _alt = v.alt.is_some() && v.alt.unwrap();
                         _shift = v.shift.is_some() && v.shift.unwrap();
+                        _meta = v.meta.is_some() && v.meta.unwrap();
                     }
                     None => {}
                 }
@@ -67,9 +69,15 @@ impl Controller {
                 if _shift {
                     player.key_down(EnigoKey::Shift);
                 }
+                if _meta {
+                    player.key_down(EnigoKey::Meta);
+                }
 
                 player.key_click(target_key);
 
+                if _meta {
+                    player.key_up(EnigoKey::Meta);
+                }
                 if _shift {
                     player.key_up(EnigoKey::Shift);
                 }
