@@ -6,8 +6,11 @@
 /** 辅助键 (ctrl / shift / alt 中的 0/1/2/3 个) */
 export interface ExtraKey {
   ctrl?: boolean
+  /** windows/linux -- `alt`; macos -- `option` */
   alt?: boolean
   shift?: boolean
+  /** windows -- `win`; linux -- `super`; macos -- `command` */
+  meta?: boolean
 }
 /** 组合键情况 (目标键 + 辅助键) */
 export interface KeyCombination {
@@ -15,6 +18,15 @@ export interface KeyCombination {
   key: string
   /** 辅助键 见[ExtraKey] */
   extra?: ExtraKey
+}
+/** 按键事件 (目标键 + 辅助键 + 按键状态) */
+export interface KeyEv {
+  /** 目标键 (可用值见 mapper 文件) */
+  key: string
+  /** 辅助键 见[ExtraKey] */
+  extra?: ExtraKey
+  /** 是否是按下状态 (默认为 `false`) */
+  down?: boolean
 }
 /** 坐标 */
 export interface MouseLocation {
@@ -24,28 +36,6 @@ export interface MouseLocation {
   y: number
 }
 export function helloworld(): string
-/** 键盘控制类 (监听 + 模拟) */
-export class KeyboardController {
-  constructor()
-  /** 已注册的组合键列表 (使用数组返回但其值为集合, 可保证无重复) */
-  get registered(): Array<KeyCombination>
-  /**
-   * 模拟目标按键
-   * `key` 目标键 (可用值见 mapper 文件)
-   * `extra` 辅助键 (ctrl / shift / alt 中的 0/1/2/3 个)
-   */
-  simulate(keys: KeyCombination): void
-  /** 注册按键监听事件 (支持组合键) */
-  listen(keys: KeyCombination, executor: (...args: any[]) => any): boolean
-  /** 更新(不存在则回退为注册)监听目标的响应执行函数 */
-  update(keys: KeyCombination, executor: (...args: any[]) => any): boolean
-  /** 取消已注册的监听 */
-  unlisten(keys: KeyCombination): void
-  /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
-  touch(keys: KeyCombination): boolean
-  /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */
-  dispose(): void
-}
 export class Controller {
   constructor()
   /** 键盘 -- 按下 */
@@ -70,24 +60,24 @@ export class Controller {
   mouseScroll(scale: number, horizontal?: boolean | undefined | null): void
   /**
    * 鼠标 -- 移动
-   * `direction`: 移动方向
-   * `absolute`: 是否使用绝对定位(相对屏幕左上角定位), 默认 `false`
+   * `direction`: 移动方向 (默认为绝对定位: 屏幕左上角为原点,向右向下为正)
+   * `relative`: 是否使用相对定位(相对当前鼠标位置), 默认 `false`
    */
-  mouseMove(direction: MouseLocation, absolute?: boolean | undefined | null): void
+  mouseMove(direction: MouseLocation, relative?: boolean | undefined | null): void
   /** 鼠标 -- 当前坐标 */
   mouseLocation(): MouseLocation
 }
 export class Observer {
   constructor()
+  /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
+  get registeredKeyEvents(): Array<KeyEv>
+  threadTest(executor: (...args: any[]) => any): void
   /** 注册/更新按键监听事件 (支持组合键) */
-  onKeys(keys: KeyCombination, executor: (...args: any[]) => any): boolean
+  onKeys(keys: KeyEv, executor: (...args: any[]) => any): boolean
   /** 移除已注册的监听 */
-  offKeys(keys: KeyCombination): void
+  offKeys(keys: KeyEv): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
-  touch(keys: KeyCombination): boolean
+  touch(keys: KeyEv): boolean
   /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */
   dispose(): void
-}
-export class RdevController {
-  constructor()
 }

@@ -1,9 +1,21 @@
-use std::collections::HashMap;
-use device_query::{CallbackGuard, Keycode as DQKey, KeyboardCallback, DeviceState, DeviceEvents};
+use std::{
+    collections::HashMap,
+    time::Duration,
+    thread,
+};
+use device_query::{
+    CallbackGuard,
+    Keycode as DQKey,
+    KeyboardCallback,
+    DeviceState, DeviceEvents,
+};
 use napi::{Env, JsFunction, Ref};
+use napi::threadsafe_function::{
+    ErrorStrategy,
+    ThreadsafeFunction,
+    ThreadsafeFunctionCallMode,
+};
 use crate::utils::{KeyEv};
-
-// type KeyEvCallback = Fn(&DQKey) + Sync + Send + 'static;
 
 #[napi]
 pub struct Observer {
@@ -36,6 +48,33 @@ impl Observer {
             _key_evs.push(key.clone());
         }
         Ok(_key_evs)
+    }
+
+    #[napi]
+    pub fn thread_test(&self, executor: JsFunction) -> napi::Result<()> {
+        let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = executor
+            .create_threadsafe_function(0, |ctx| {
+                Ok(vec![ctx.value])
+            })?;
+
+        let fn1 = tsfn.clone();
+        thread::spawn(move || {
+            fn1.call(Ok(String::from("子线程1 -- immediate")), ThreadsafeFunctionCallMode::NonBlocking);
+        });
+
+        let fn2 = tsfn.clone();
+        thread::spawn(move || {
+            thread::sleep(Duration::from_secs(1));
+            fn2.call(Ok(String::from("子线程2 -- sleep 1s")), ThreadsafeFunctionCallMode::NonBlocking);
+        });
+
+        let fn3 = tsfn.clone();
+        thread::spawn(move || {
+            thread::sleep(Duration::from_secs(2));
+            fn3.call(Ok(String::from("子线程3 -- sleep 2s")), ThreadsafeFunctionCallMode::NonBlocking);
+        });
+
+        Ok(())
     }
 
     /// 开始监听
@@ -141,5 +180,27 @@ mod unit_test {
         drop(_guard);//aabasfazasdfgqwert12345678
 
         thread::sleep(Duration::from_secs(5));
+    }
+
+    #[test]
+    fn thread_test() {
+        let handle = thread::spawn(|| {
+            for i in 1..10 {
+                println!("from spawned thread: {}", i);
+                thread::sleep(Duration::from_secs(1));
+            }
+        });
+
+        println!("thread created but not joined.");
+
+        thread::sleep(Duration::from_secs(5));
+
+
+        for i in 1..5 {
+            println!("from main thread: {}", i);
+            thread::sleep(Duration::from_secs(1));
+        }
+
+        handle.join();
     }
 }
