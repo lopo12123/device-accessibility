@@ -147,18 +147,18 @@ impl Controller {
     }
 
     /// 鼠标 -- 移动
-    /// `direction`: 移动方向
-    /// `absolute`: 是否使用绝对定位(相对屏幕左上角定位), 默认 `false`
+    /// `direction`: 移动方向 (默认为绝对定位: 屏幕左上角为原点,向右向下为正)
+    /// `relative`: 是否使用相对定位(相对当前鼠标位置), 默认 `false`
     #[napi]
-    pub fn mouse_move(&self, direction: MouseLocation, absolute: Option<bool>) -> napi::Result<()> {
-        let is_absolute = match absolute {
+    pub fn mouse_move(&self, direction: MouseLocation, relative: Option<bool>) -> napi::Result<()> {
+        let is_relative = match relative {
             Some(v) => v,
             None => false
         };
-        if is_absolute {
-            Enigo::new().mouse_move_to(direction.x, direction.y);
-        } else {
+        if is_relative {
             Enigo::new().mouse_move_relative(direction.x, direction.y);
+        } else {
+            Enigo::new().mouse_move_to(direction.x, direction.y);
         }
         Ok(())
     }

@@ -16,11 +16,18 @@ export interface KeyCombination {
   /** 辅助键 见[ExtraKey] */
   extra?: ExtraKey
 }
-export function helloWorld(): string
+/** 坐标 */
+export interface MouseLocation {
+  /** x 方向 (`i32`) */
+  x: number
+  /** y 方向 (`i32`) */
+  y: number
+}
+export function helloworld(): string
 /** 键盘控制类 (监听 + 模拟) */
 export class KeyboardController {
   constructor()
-  /** 已注册的按键 */
+  /** 已注册的组合键列表 (使用数组返回但其值为集合, 可保证无重复) */
   get registered(): Array<KeyCombination>
   /**
    * 模拟目标按键
@@ -34,6 +41,53 @@ export class KeyboardController {
   update(keys: KeyCombination, executor: (...args: any[]) => any): boolean
   /** 取消已注册的监听 */
   unlisten(keys: KeyCombination): void
-  /** 主动触发已注册的按键事件 */
+  /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
   touch(keys: KeyCombination): boolean
+  /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */
+  dispose(): void
+}
+export class Controller {
+  constructor()
+  /** 键盘 -- 按下 */
+  keyDown(key: string): void
+  /** 键盘 -- 释放 */
+  keyUp(key: string): void
+  /** 键盘 -- 点击 (即 `key_down - 20ms - key_up`) */
+  keyClick(keys: KeyCombination): void
+  /** 键盘 -- 输入 */
+  keyType(sentence: string): void
+  /** 鼠标 -- 按下 */
+  mouseDown(key: string): void
+  /** 鼠标 -- 释放 */
+  mouseUp(key: string): void
+  /** 鼠标 -- 点击 (即 `mouse_down - 20ms - mouse_up`) */
+  mouseClick(key: string): void
+  /**
+   * 鼠标 -- 滚动
+   * `scale`: 整数. 正向左/上, 负向右/下
+   * `horizontal`: 是否水平滚动, 默认 `false`
+   */
+  mouseScroll(scale: number, horizontal?: boolean | undefined | null): void
+  /**
+   * 鼠标 -- 移动
+   * `direction`: 移动方向
+   * `absolute`: 是否使用绝对定位(相对屏幕左上角定位), 默认 `false`
+   */
+  mouseMove(direction: MouseLocation, absolute?: boolean | undefined | null): void
+  /** 鼠标 -- 当前坐标 */
+  mouseLocation(): MouseLocation
+}
+export class Observer {
+  constructor()
+  /** 注册/更新按键监听事件 (支持组合键) */
+  onKeys(keys: KeyCombination, executor: (...args: any[]) => any): boolean
+  /** 移除已注册的监听 */
+  offKeys(keys: KeyCombination): void
+  /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
+  touch(keys: KeyCombination): boolean
+  /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */
+  dispose(): void
+}
+export class RdevController {
+  constructor()
 }
