@@ -1,3 +1,7 @@
+mod enigo_mapper;
+
+pub use enigo_mapper::EnigoMapper;
+
 use device_query::{Keycode as DqKey, MouseButton as DqMouse};
 use enigo::{Key as EnigoKey, MouseButton as EnigoMouse};
 

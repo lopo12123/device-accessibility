@@ -1,6 +1,7 @@
 use enigo::{Enigo, Key as EnigoKey, MouseButton as EnigoMouse, KeyboardControllable, MouseControllable};
 use napi::{Error, Status};
-use crate::mapper::{KeyboardMapper, MouseMapper};
+
+use crate::mapper::EnigoMapper;
 use crate::utils::{KeyCombination, MouseLocation};
 
 #[napi]
@@ -16,7 +17,7 @@ impl Controller {
     /// 键盘 -- 按下
     #[napi]
     pub fn key_down(&self, key: String) -> napi::Result<()> {
-        match KeyboardMapper::front_to_enigo(&key) {
+        match EnigoMapper::decode_key(key) {
             Some(_key) => {
                 Enigo::new().key_down(_key);
                 Ok(())
@@ -28,7 +29,7 @@ impl Controller {
     /// 键盘 -- 释放
     #[napi]
     pub fn key_up(&self, key: String) -> napi::Result<()> {
-        match KeyboardMapper::front_to_enigo(&key) {
+        match EnigoMapper::decode_key(key) {
             Some(_key) => {
                 Enigo::new().key_up(_key);
                 Ok(())
@@ -42,7 +43,7 @@ impl Controller {
     pub fn key_click(&self, keys: KeyCombination) -> napi::Result<()> {
         let mut player = Enigo::new();
 
-        match KeyboardMapper::front_to_enigo(&keys.key) {
+        match EnigoMapper::decode_key(keys.key) {
             Some(target_key) => {
                 let mut _ctrl = false;
                 let mut _alt = false;
@@ -95,7 +96,7 @@ impl Controller {
     /// 鼠标 -- 按下
     #[napi]
     pub fn mouse_down(&self, key: String) -> napi::Result<()> {
-        match MouseMapper::front_to_enigo(key) {
+        match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_down(_key);
                 Ok(())
@@ -107,7 +108,7 @@ impl Controller {
     /// 鼠标 -- 释放
     #[napi]
     pub fn mouse_up(&self, key: String) -> napi::Result<()> {
-        match MouseMapper::front_to_enigo(key) {
+        match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_up(_key);
                 Ok(())
@@ -119,7 +120,7 @@ impl Controller {
     /// 鼠标 -- 点击 (即 `mouse_down - 20ms - mouse_up`)
     #[napi]
     pub fn mouse_click(&self, key: String) -> napi::Result<()> {
-        match MouseMapper::front_to_enigo(key) {
+        match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_click(_key);
                 Ok(())

@@ -5,8 +5,10 @@ pub mod keyboard;
 mod mouse;
 mod mapper;
 
-pub mod controller;
 pub mod utils;
+pub mod controller;
+pub mod observer;
+pub mod rdev_controller;
 
 
 #[napi]

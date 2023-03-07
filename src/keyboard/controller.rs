@@ -5,7 +5,6 @@ use napi::{Env, Error, JsFunction, Ref, Status};
 use crate::mapper::KeyboardMapper;
 use crate::utils::{ExtraKey, KeyCombination};
 
-
 /// 键盘控制类 (监听 + 模拟)
 #[napi]
 pub struct KeyboardController {
