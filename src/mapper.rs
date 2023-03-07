@@ -1,4 +1,5 @@
 mod enigo_mapper;
+mod dq_mapper;
 
 pub use enigo_mapper::EnigoMapper;
 
