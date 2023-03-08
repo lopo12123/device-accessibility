@@ -68,11 +68,15 @@ export class Controller {
   mouseLocation(): MouseLocation
 }
 export class Observer {
+  /** 跨线程调用安全测试 */
+  tsfnTest(callback: (err: null | Error, result: string) => void): void
   constructor()
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeyEvents(): Array<KeyEv>
-  /** 跨线程调用 -- 安全测试 */
-  tsfnTest(callback: (err: null | Error, result: string) => void): void
+  /** 开始监听 todo */
+  start(callback: (err: null | Error, result: string) => void): void
+  /** 结束监听 */
+  stop(): void
   /** 注册/更新按键监听事件 (支持组合键) */
   onKeys(keys: KeyEv, executor: (...args: any[]) => any): boolean
   /** 移除已注册的监听 */

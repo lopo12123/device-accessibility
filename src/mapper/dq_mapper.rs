@@ -5,7 +5,7 @@ pub struct DQMapper {}
 #[allow(unused)]
 impl DQMapper {
     /// device_query -> String
-    pub fn encode_key(key: DQKey) -> Option<String> {
+    pub fn encode_key(key: &DQKey) -> Option<String> {
         match key {
             DQKey::F1 => Some(String::from("F1")),
             DQKey::F2 => Some(String::from("F2")),
@@ -208,7 +208,7 @@ impl DQMapper {
     }
 
     /// device_query -> String
-    pub fn encode_mouse(mouse: DQMouse) -> Option<String> {
+    pub fn encode_mouse(mouse: &DQMouse) -> Option<String> {
         match mouse {
             1 => Some(String::from("Left")),
             2 => Some(String::from("Right")),

@@ -3,10 +3,8 @@ use std::{
     time::Duration,
     thread,
 };
+use std::sync::{Arc, Mutex};
 use device_query::{
-    CallbackGuard,
-    Keycode as DQKey,
-    KeyboardCallback,
     DeviceState, DeviceEvents,
 };
 use napi::{Env, JsFunction, Ref};
@@ -15,42 +13,21 @@ use napi::threadsafe_function::{
     ThreadsafeFunction,
     ThreadsafeFunctionCallMode,
 };
+use crate::mapper::DQMapper;
 use crate::utils::{KeyEv};
 
 #[napi]
 pub struct Observer {
-    /// guard -- key down
-    // guard_keydown: Option<CallbackGuard<impl Fn(&DQKey) + Sync + Send + 'static>>,
-    // guard_keydown: Option<CallbackGuard<>>,
-    /// guard -- key up
-    // guard_keyup: Option<>
+    /// 子进程守护 -- 为 `false` 表示结束守护
+    guard: Arc<Mutex<bool>>,
 
     /// 已注册的按键事件表
     key_evs: HashMap<KeyEv, Ref<()>>,
-    // mouse_evs: HashMap
 }
 
 #[napi]
 impl Observer {
-    #[napi(constructor)]
-    pub fn new() -> Self {
-        Observer {
-            key_evs: HashMap::new(),
-            // guard_keydown: None,
-        }
-    }
-
-    /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
-    #[napi(getter)]
-    pub fn registered_key_events(&self) -> napi::Result<Vec<KeyEv>> {
-        let mut _key_evs = vec![];
-        for key in self.key_evs.keys() {
-            _key_evs.push(key.clone());
-        }
-        Ok(_key_evs)
-    }
-
-    /// 跨线程调用 -- 安全测试
+    /// 跨线程调用安全测试
     #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
     pub fn tsfn_test(&self, callback: JsFunction) -> napi::Result<()> {
         let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
@@ -79,17 +56,58 @@ impl Observer {
         Ok(())
     }
 
-    /// 开始监听
-    pub fn start_listen(&mut self) {
-        // let dq = DeviceState::new();
+    #[napi(constructor)]
+    pub fn new() -> Self {
+        Observer {
+            guard: Arc::new(Mutex::new(true)),
+            key_evs: HashMap::new(),
+        }
+    }
 
-        // let _guard = dq.on_key_down(|ev| {
-        //     println!("down: {:#?}", ev)
-        // });
-        // self.guard_keydown = Some(_guard);
+    /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
+    #[napi(getter)]
+    pub fn registered_key_events(&self) -> napi::Result<Vec<KeyEv>> {
+        let mut _key_evs = vec![];
+        for key in self.key_evs.keys() {
+            _key_evs.push(key.clone());
+        }
+        Ok(_key_evs)
+    }
 
-        // let bb: Box<CallbackGuard<fn(&DQKey)>> = Box::new(_guard);
-        // let guard2: CallbackGuard<Box<dyn Fn(&DQKey) + Send + Sync + 'static>> = _guard._callback;
+    /// 开始监听 todoajhdf
+    #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
+    pub fn start(&self, callback: JsFunction) -> napi::Result<()> {
+        let signal = self.guard.clone();
+        let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
+            .create_threadsafe_function(0, |ctx| {
+                Ok(vec![ctx.value])
+            })?;
+        let evcb = tsfn.clone();
+
+        thread::spawn(move || {
+            let _guard = DeviceState::new().on_key_down(move |ev| {
+                let keycode = match DQMapper::encode_key(ev) {
+                    Some(v) => v,
+                    None => String::from("Unknown"),
+                };
+                evcb.call(Ok(keycode), ThreadsafeFunctionCallMode::NonBlocking);
+            });
+
+            while *signal.lock().unwrap() {
+                // 检查间隔 -- 100ms
+                thread::sleep(Duration::from_millis(100));
+            };
+        });
+
+        Ok(())
+    }
+
+    /// 结束监听
+    #[napi]
+    pub fn stop(&mut self) -> napi::Result<()> {
+        *self.guard.lock().unwrap() = false;
+
+        Ok(())
     }
 
     /// 注册/更新按键监听事件 (支持组合键)
@@ -164,7 +182,6 @@ impl Observer {
 #[cfg(test)]
 mod unit_test {
     use super::*;
-    use device_query::{DeviceEvents, DeviceState};
     use std::thread;
     use std::time::Duration;
 
@@ -172,7 +189,7 @@ mod unit_test {
     fn test() {
         let dq = DeviceState::new();
         let _guard = dq.on_key_down(|ev| {
-            println!("down: {:#?}", ev)
+            println!("{}", ev);
         });
 
         // hellohello
@@ -203,6 +220,23 @@ mod unit_test {
             thread::sleep(Duration::from_secs(1));
         }
 
-        handle.join();
+        handle.join().unwrap();
+    }
+
+    #[test]
+    fn mutex_test() {
+        let n = Arc::new(Mutex::new(1));
+
+        let signal = n.clone();
+        let guard = thread::spawn(move || {
+            for t in 1..5 {
+                let mut n = signal.lock().unwrap();
+                println!("t: {}; n: {}", t, n);
+                *n += 1;
+                thread::sleep(Duration::from_secs(1));
+            }
+        });
+
+        guard.join().unwrap();
     }
 }
