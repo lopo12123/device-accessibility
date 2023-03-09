@@ -200,6 +200,6 @@ mod unit_test {
     #[test]
     fn key_test2() {
         thread::sleep(Duration::from_secs(2));
-        Enigo::new().key_click(EnigoKey::Meta);
+        Enigo::new().key_click(EnigoKey::Layout('8'));
     }
 }
