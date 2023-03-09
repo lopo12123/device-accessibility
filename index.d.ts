@@ -68,15 +68,23 @@ export class Controller {
   mouseLocation(): MouseLocation
 }
 export class Observer {
+  /** thread-safe function test */
+  tsfnTest(callback: (err: null | Error, result: string) => void): void
   constructor()
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeyEvents(): Array<KeyEv>
-  /** 跨线程调用 -- 安全测试 */
-  tsfnTest(callback: (err: null | Error, result: string) => void): void
+  /** 开始监听 */
+  start(): void
+  /** 结束监听 */
+  stop(): void
   /** 注册/更新按键监听事件 (支持组合键) */
-  onKeys(keys: KeyEv, executor: (...args: any[]) => any): boolean
+  onKey(keys: KeyEv, executor: (...args: any[]) => any): boolean
   /** 移除已注册的监听 */
-  offKeys(keys: KeyEv): void
+  offKey(keys: KeyEv): void
+  /** 注册/更新对全部按键的监听事件 */
+  onKeyAll(callback: (err: null | Error, keycode: string) => void): void
+  /** 移除对全部按键的监听事件 */
+  offKeyAll(): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
   touch(keys: KeyEv): boolean
   /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */

@@ -3,6 +3,7 @@ use std::{
     time::Duration,
     thread,
 };
+use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use device_query::{
     DeviceState, DeviceEvents,
@@ -16,6 +17,9 @@ use napi::threadsafe_function::{
 use crate::mapper::DQMapper;
 use crate::utils::{KeyEv};
 
+/// 子线程检查间隔 -- ms
+const LOOP_GAP: u64 = 100;
+
 #[napi]
 pub struct Observer {
     /// 子进程守护 -- 为 `false` 表示结束守护
@@ -23,6 +27,8 @@ pub struct Observer {
 
     /// 已注册的按键事件表
     key_evs: HashMap<KeyEv, Ref<()>>,
+    /// 监听全部事件的回调函数
+    all_key_cb: Arc<Mutex<Option<ThreadsafeFunction<KeyEv>>>>,
 }
 
 #[napi]
@@ -61,6 +67,7 @@ impl Observer {
         Observer {
             guard: Arc::new(Mutex::new(true)),
             key_evs: HashMap::new(),
+            all_key_cb: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -74,28 +81,59 @@ impl Observer {
         Ok(_key_evs)
     }
 
-    /// 开始监听 todoajhdf
-    #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
-    pub fn start(&self, callback: JsFunction) -> napi::Result<()> {
+    /// 开始监听
+    #[napi]
+    pub fn start(&self) -> napi::Result<()> {
         let signal = self.guard.clone();
-        let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
-            .create_threadsafe_function(0, |ctx| {
-                Ok(vec![ctx.value])
-            })?;
-        let evcb = tsfn.clone();
+        let key_cb_down = self.all_key_cb.clone();
+        let key_cb_up = self.all_key_cb.clone();
 
         thread::spawn(move || {
-            let _guard = DeviceState::new().on_key_down(move |ev| {
-                let keycode = match DQMapper::encode_key(ev) {
-                    Some(v) => v,
-                    None => String::from("Unknown"),
+            // 按键按下监听
+            let _guard = DeviceState::new().on_key_down(move |keycode| {
+                // 对全部事件的监听
+                match key_cb_down.lock().unwrap().deref() {
+                    Some(cb) => {
+                        cb.call(Ok(KeyEv {
+                            key: match DQMapper::encode_key(keycode) {
+                                Some(v) => v,
+                                None => String::from("Unknown")
+                            },
+                            extra: None,
+                            down: Some(true),
+                        }), ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    None => {}
                 };
-                evcb.call(Ok(keycode), ThreadsafeFunctionCallMode::NonBlocking);
+
+                // 对注册事件的监听
+                // todo
             });
 
+            // 按键释放监听
+            let _guard = DeviceState::new().on_key_down(move |keycode| {
+                // 对全部事件的监听
+                match key_cb_up.lock().unwrap().deref() {
+                    Some(cb) => {
+                        cb.call(Ok(KeyEv {
+                            key: match DQMapper::encode_key(keycode) {
+                                Some(v) => v,
+                                None => String::from("Unknown")
+                            },
+                            extra: None,
+                            down: Some(false),
+                        }), ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    None => {}
+                };
+
+                // 对注册事件的监听
+                // todo
+            });
+
+            // 监听结束判断
             while *signal.lock().unwrap() {
-                // 检查间隔 -- 100ms
-                thread::sleep(Duration::from_millis(100));
+                thread::sleep(Duration::from_millis(LOOP_GAP));
             };
         });
 
@@ -105,14 +143,18 @@ impl Observer {
     /// 结束监听
     #[napi]
     pub fn stop(&mut self) -> napi::Result<()> {
+        // 发送停止信号
         *self.guard.lock().unwrap() = false;
+
+        // 移除对全部按键事件的监听
+        *self.all_key_cb.lock().unwrap() = None;
 
         Ok(())
     }
 
     /// 注册/更新按键监听事件 (支持组合键)
     #[napi]
-    pub fn on_keys(&mut self, env: Env, keys: KeyEv, executor: JsFunction) -> napi::Result<bool> {
+    pub fn on_key(&mut self, env: Env, keys: KeyEv, executor: JsFunction) -> napi::Result<bool> {
         // 释放旧的引用
         match self.key_evs.get_mut(&keys) {
             Some(js_ref) => {
@@ -132,7 +174,7 @@ impl Observer {
 
     /// 移除已注册的监听
     #[napi]
-    pub fn off_keys(&mut self, env: Env, keys: KeyEv) -> napi::Result<()> {
+    pub fn off_key(&mut self, env: Env, keys: KeyEv) -> napi::Result<()> {
         // 释放旧的引用
         match self.key_evs.get_mut(&keys) {
             Some(js_ref) => {
@@ -143,6 +185,26 @@ impl Observer {
 
         // 取消注册
         self.key_evs.remove(&keys);
+
+        Ok(())
+    }
+
+    /// 注册/更新对全部按键的监听事件
+    #[napi(ts_args_type = "callback: (err: null | Error, keycode: string) => void")]
+    pub fn on_key_all(&self, callback: JsFunction) -> napi::Result<()> {
+        let tsfn = callback.create_threadsafe_function(0, |ctx| {
+            Ok(vec![ctx.value])
+        })?;
+
+        *self.all_key_cb.lock().unwrap() = Some(tsfn);
+
+        Ok(())
+    }
+
+    /// 移除对全部按键的监听事件
+    #[napi]
+    pub fn off_key_all(&self) -> napi::Result<()> {
+        *self.all_key_cb.lock().unwrap() = None;
 
         Ok(())
     }
@@ -174,7 +236,7 @@ impl Observer {
         // 移除记录
         self.key_evs.clear();
 
-        // 结束
+        // 结束1
         Ok(())
     }
 }
@@ -184,12 +246,15 @@ mod unit_test {
     use super::*;
     use std::thread;
     use std::time::Duration;
+    use device_query::DeviceQuery;
 
     #[test]
     fn test() {
         let dq = DeviceState::new();
         let _guard = dq.on_key_down(|ev| {
             println!("{}", ev);
+
+            println!("curr keys: {:?}", DeviceState::new().get_keys());
         });
 
         // hellohello
