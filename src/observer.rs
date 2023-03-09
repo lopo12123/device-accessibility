@@ -1,13 +1,11 @@
 use std::{
     collections::HashMap,
+    ops::Deref,
+    sync::{Arc, Mutex},
     time::Duration,
     thread,
 };
-use std::ops::{Deref};
-use std::sync::{Arc, Mutex};
-use device_query::{
-    DeviceState, DeviceEvents,
-};
+use device_query::{DeviceState, DeviceEvents, DeviceQuery, Keycode as DQKey};
 use napi::{Error, JsFunction, Status};
 use napi::threadsafe_function::{
     ErrorStrategy,
@@ -15,7 +13,7 @@ use napi::threadsafe_function::{
     ThreadsafeFunctionCallMode,
 };
 use crate::mapper::DQMapper;
-use crate::utils::{KeyEv};
+use crate::utils::{ExtraKey, KeyEv, KeyEvRegister};
 
 /// 子线程检查间隔 -- ms
 const LOOP_GAP: u64 = 1000;
@@ -26,7 +24,7 @@ pub struct Observer {
     guard: Arc<Mutex<bool>>,
 
     /// 按键事件监听注册表
-    key_evs: Arc<Mutex<HashMap<KeyEv, ThreadsafeFunction<()>>>>,
+    key_evs: Arc<Mutex<HashMap<KeyEvRegister, ThreadsafeFunction<()>>>>,
 
     /// 监听全部事件的回调函数
     global_key_cb: Arc<Mutex<Option<ThreadsafeFunction<KeyEv>>>>,
@@ -72,10 +70,17 @@ impl Observer {
         let keyup_cb_all = self.global_key_cb.clone();
         // 特定按键事件监听回调
         let keydown_cb_spec = self.key_evs.clone();
+        let keyup_cb_spec = self.key_evs.clone();
 
         thread::spawn(move || {
+            // 状态监听
+            let listener = DeviceState::new();
+
             // 按键按下监听
-            let _guard = DeviceState::new().on_key_down(move |keycode| {
+            let _guard = listener.on_key_down(move |keycode| {
+                // 状态扫描
+                let scanner = DeviceState::new();
+
                 // 对全部事件的监听
                 match keydown_cb_all.lock().unwrap().deref() {
                     Some(cb) => {
@@ -92,14 +97,32 @@ impl Observer {
                 };
 
                 // 对注册事件的监听
-                // todo
-                for (_, cb) in keydown_cb_spec.lock().unwrap().iter() {
-                    cb.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
-                };
+                let key = DQMapper::encode_key(keycode).unwrap();
+                let (mut ctrl, mut alt, mut shift, mut meta) = (false, false, false, false);
+                for _key in scanner.get_keys() {
+                    match _key {
+                        DQKey::LControl | DQKey::RControl => ctrl = true,
+                        DQKey::LAlt | DQKey::RAlt => alt = true,
+                        DQKey::LShift | DQKey::RShift => shift = true,
+                        DQKey::Meta => meta = true,
+                        _ => {}
+                    };
+                }
+                let register_ev = KeyEvRegister::new(key, ctrl, alt, shift, meta, true);
+
+                match keydown_cb_spec.lock().unwrap().get(&register_ev) {
+                    Some(cb) => {
+                        cb.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    None => {}
+                }
             });
 
             // 按键释放监听
-            let _guard = DeviceState::new().on_key_up(move |keycode| {
+            let _guard = listener.on_key_up(move |keycode| {
+                // 状态扫描
+                let scanner = DeviceState::new();
+
                 // 对全部事件的监听
                 match keyup_cb_all.lock().unwrap().deref() {
                     Some(cb) => {
@@ -116,7 +139,25 @@ impl Observer {
                 };
 
                 // 对注册事件的监听
-                // todo
+                let key = DQMapper::encode_key(keycode).unwrap();
+                let (mut ctrl, mut alt, mut shift, mut meta) = (false, false, false, false);
+                for _key in scanner.get_keys() {
+                    match _key {
+                        DQKey::LControl | DQKey::RControl => ctrl = true,
+                        DQKey::LAlt | DQKey::RAlt => alt = true,
+                        DQKey::LShift | DQKey::RShift => shift = true,
+                        DQKey::Meta => meta = true,
+                        _ => {}
+                    };
+                }
+                let register_ev = KeyEvRegister::new(key, ctrl, alt, shift, meta, false);
+
+                match keyup_cb_spec.lock().unwrap().get(&register_ev) {
+                    Some(cb) => {
+                        cb.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
+                    }
+                    None => {}
+                }
             });
 
             // 监听结束判断
@@ -158,7 +199,7 @@ impl Observer {
 
         let evs = self.key_evs.lock().unwrap();
         for key in evs.keys() {
-            _key_evs.push(key.clone());
+            _key_evs.push(key.to_key_ev());
         }
 
         Ok(_key_evs)
@@ -169,7 +210,9 @@ impl Observer {
     pub fn on_key(&mut self, keys: KeyEv, callback: JsFunction) -> napi::Result<()> {
         if self.check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
-            evs.insert(keys, callback.create_threadsafe_function(0, |ctx| {
+
+            let register_ev = KeyEvRegister::from_key_ev(keys);
+            evs.insert(register_ev, callback.create_threadsafe_function(0, |ctx| {
                 Ok(vec![ctx.value])
             })?);
             Ok(())
@@ -183,7 +226,8 @@ impl Observer {
     pub fn off_key(&mut self, keys: KeyEv) -> napi::Result<()> {
         if self.check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
-            evs.remove(&keys);
+            let register_ev = KeyEvRegister::from_key_ev(keys);
+            evs.remove(&register_ev);
             Ok(())
         } else {
             Err(Error::new(Status::InvalidArg, format!("Invalid Key!")))
@@ -215,7 +259,8 @@ impl Observer {
     pub fn touch(&self, keys: KeyEv) -> napi::Result<bool> {
         if self.check_key(keys.key.clone()).unwrap() {
             let evs = self.key_evs.lock().unwrap();
-            match evs.get(&keys) {
+            let register_ev = KeyEvRegister::from_key_ev(keys);
+            match evs.get(&register_ev) {
                 Some(tsfn) => {
                     tsfn.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
                     Ok(true)
@@ -259,16 +304,17 @@ mod unit_test {
     fn test() {
         let dq = DeviceState::new();
         let _guard = dq.on_key_down(|ev| {
-            println!("{}", ev);
-
-            println!("curr keys: {:?}", DeviceState::new().get_keys());
+            let scanner = DeviceState::new();
+            println!("keydown: {} | ctrl: {}", ev, scanner.get_keys().contains(&DQKey::LControl));
         });
-
-        // hellohello
+        let _guard = dq.on_key_up(|ev| {
+            let scanner = DeviceState::new();
+            println!("keyup {} | ctrl: {}", ev, scanner.get_keys().contains(&DQKey::LControl));
+        });
 
         thread::sleep(Duration::from_secs(5));
 
-        drop(_guard);//aabasfazasdfgqwert12345678
+        drop(_guard);//aabasfazasdfgqwert123456123ac
 
         thread::sleep(Duration::from_secs(5));
     }

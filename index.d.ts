@@ -71,6 +71,8 @@ export class Observer {
   /** thread-safe function test */
   tsfnTest(callback: (err: null | Error, result: string) => void): void
   constructor()
+  /** 检查键名是否合法 */
+  checkKey(key: string): boolean
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeys(): Array<KeyEv>
   /** 注册/更新按键监听事件 (支持组合键) */
@@ -84,7 +86,5 @@ export class Observer {
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
   touch(keys: KeyEv): boolean
   /** 结束监听 (必须调用! 否则会由于过度持有引用造成内存泄露) */
-  stop(): void
-  /** 销毁实例 */
   dispose(): void
 }
