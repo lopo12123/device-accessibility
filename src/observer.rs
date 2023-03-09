@@ -3,12 +3,13 @@ use std::{
     time::Duration,
     thread,
 };
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 use device_query::{
     DeviceState, DeviceEvents,
 };
 use napi::{Env, JsFunction, Ref};
+use napi::sys::setup;
 use napi::threadsafe_function::{
     ErrorStrategy,
     ThreadsafeFunction,
@@ -18,17 +19,18 @@ use crate::mapper::DQMapper;
 use crate::utils::{KeyEv};
 
 /// 子线程检查间隔 -- ms
-const LOOP_GAP: u64 = 100;
+const LOOP_GAP: u64 = 1000;
 
 #[napi]
 pub struct Observer {
-    /// 子进程守护 -- 为 `false` 表示结束守护
+    /// 是否监听 -- 为 `false` 表示结束
     guard: Arc<Mutex<bool>>,
 
-    /// 已注册的按键事件表
+    /// 按键事件监听注册表
     key_evs: HashMap<KeyEv, Ref<()>>,
+
     /// 监听全部事件的回调函数
-    all_key_cb: Arc<Mutex<Option<ThreadsafeFunction<KeyEv>>>>,
+    global_key_cb: Arc<Mutex<Option<ThreadsafeFunction<KeyEv>>>>,
 }
 
 #[napi]
@@ -62,31 +64,13 @@ impl Observer {
         Ok(())
     }
 
-    #[napi(constructor)]
-    pub fn new() -> Self {
-        Observer {
-            guard: Arc::new(Mutex::new(true)),
-            key_evs: HashMap::new(),
-            all_key_cb: Arc::new(Mutex::new(None)),
-        }
-    }
-
-    /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
-    #[napi(getter)]
-    pub fn registered_key_events(&self) -> napi::Result<Vec<KeyEv>> {
-        let mut _key_evs = vec![];
-        for key in self.key_evs.keys() {
-            _key_evs.push(key.clone());
-        }
-        Ok(_key_evs)
-    }
-
-    /// 开始监听
-    #[napi]
-    pub fn start(&self) -> napi::Result<()> {
+    /// 初始化 -- 子线程监听
+    fn setup(&self) {
+        // 终止信号
         let signal = self.guard.clone();
-        let key_cb_down = self.all_key_cb.clone();
-        let key_cb_up = self.all_key_cb.clone();
+        // 全部按键事件监听回调
+        let key_cb_down = self.global_key_cb.clone();
+        let key_cb_up = self.global_key_cb.clone();
 
         thread::spawn(move || {
             // 按键按下监听
@@ -134,22 +118,34 @@ impl Observer {
             // 监听结束判断
             while *signal.lock().unwrap() {
                 thread::sleep(Duration::from_millis(LOOP_GAP));
+                println!("tick");
             };
-        });
 
-        Ok(())
+            println!("listen finished.")
+        });
     }
 
-    /// 结束监听
-    #[napi]
-    pub fn stop(&mut self) -> napi::Result<()> {
-        // 发送停止信号
-        *self.guard.lock().unwrap() = false;
+    #[napi(constructor)]
+    pub fn new() -> Self {
+        let instance = Observer {
+            guard: Arc::new(Mutex::new(true)),
+            key_evs: HashMap::new(),
+            global_key_cb: Arc::new(Mutex::new(None)),
+        };
 
-        // 移除对全部按键事件的监听
-        *self.all_key_cb.lock().unwrap() = None;
+        instance.setup();
 
-        Ok(())
+        instance
+    }
+
+    /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
+    #[napi(getter)]
+    pub fn registered_keys(&self) -> napi::Result<Vec<KeyEv>> {
+        let mut _key_evs = vec![];
+        for key in self.key_evs.keys() {
+            _key_evs.push(key.clone());
+        }
+        Ok(_key_evs)
     }
 
     /// 注册/更新按键监听事件 (支持组合键)
@@ -196,7 +192,7 @@ impl Observer {
             Ok(vec![ctx.value])
         })?;
 
-        *self.all_key_cb.lock().unwrap() = Some(tsfn);
+        *self.global_key_cb.lock().unwrap() = Some(tsfn);
 
         Ok(())
     }
@@ -204,7 +200,7 @@ impl Observer {
     /// 移除对全部按键的监听事件
     #[napi]
     pub fn off_key_all(&self) -> napi::Result<()> {
-        *self.all_key_cb.lock().unwrap() = None;
+        *self.global_key_cb.lock().unwrap() = None;
 
         Ok(())
     }
@@ -222,8 +218,32 @@ impl Observer {
         }
     }
 
-    /// 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露)
+    /// 结束监听
     #[napi]
+    pub fn stop(&mut self) -> napi::Result<()> {
+        let mut guard = self.guard.lock().unwrap();
+
+        // 已结束 -- 直接返回
+        if *guard {
+            println!("Stopping.");
+
+            // 发送停止信号
+            *guard = false;
+
+            // 释放全部按键的回调函数
+            *self.global_key_cb.lock().unwrap() = None;
+            // todo 释放注册表中的回调函数
+
+            println!("Stopped.");
+        } else {
+            println!("Already Stopped.");
+        }
+
+        Ok(())
+    }
+
+    /// 销毁实例 (必须调用! 否则会由于过度持有引用造成内存泄露)
+    // #[napi]
     pub fn dispose(&mut self, env: Env) -> napi::Result<()> {
         // 停止监听
         // self.stop();

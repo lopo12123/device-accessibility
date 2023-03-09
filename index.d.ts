@@ -72,11 +72,7 @@ export class Observer {
   tsfnTest(callback: (err: null | Error, result: string) => void): void
   constructor()
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
-  get registeredKeyEvents(): Array<KeyEv>
-  /** 开始监听 */
-  start(): void
-  /** 结束监听 */
-  stop(): void
+  get registeredKeys(): Array<KeyEv>
   /** 注册/更新按键监听事件 (支持组合键) */
   onKey(keys: KeyEv, executor: (...args: any[]) => any): boolean
   /** 移除已注册的监听 */
@@ -87,6 +83,6 @@ export class Observer {
   offKeyAll(): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
   touch(keys: KeyEv): boolean
-  /** 销毁实例 (必须调用! 否则可能会由于过度持有引用造成内存泄露) */
-  dispose(): void
+  /** 结束监听 */
+  stop(): void
 }
