@@ -14,15 +14,15 @@ export interface ExtraKey {
 }
 /** 组合键情况 (目标键 + 辅助键) */
 export interface KeyCombination {
-  /** 目标键 (可用值见 mapper 文件) */
-  key: string
+  /** 目标键 */
+  key: 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8' | 'F9' | 'F10' | 'F11' | 'F12' | 'Digit0' | 'Digit1' | 'Digit2' | 'Digit3' | 'Digit4' | 'Digit5' | 'Digit6' | 'Digit7' | 'Digit8' | 'Digit9' | 'KeyA' | 'KeyB' | 'KeyC' | 'KeyD' | 'KeyE' | 'KeyF' | 'KeyG' | 'KeyH' | 'KeyI' | 'KeyJ' | 'KeyK' | 'KeyL' | 'KeyM' | 'KeyN' | 'KeyO' | 'KeyP' | 'KeyQ' | 'KeyR' | 'KeyS' | 'KeyT' | 'KeyU' | 'KeyV' | 'KeyW' | 'KeyX' | 'KeyY' | 'KeyZ' | 'Meta' | 'Escape' | 'Tab' | 'CapsLock' | 'Shift' | 'Control' | 'Alt' | 'Space' | 'ArrowUp' | 'ArrowRight' | 'ArrowDown' | 'ArrowLeft' | 'Enter' | 'Backspace' | 'Delete' | 'Home' | 'PageUp' | 'PageDown' | 'End' | 'Backquote' | 'Minus' | 'Equal' | 'BracketLeft' | 'BracketRight' | 'Comma' | 'Period' | 'Semicolon' | 'Quote' | 'Slash' | 'BackSlash' | 'ShiftLeft' | 'ShiftRight' | 'ControlLeft' | 'ControlRight' | 'AltLeft' | 'AltRight' | 'Numpad0' | 'Numpad1' | 'Numpad2' | 'Numpad3' | 'Numpad4' | 'Numpad5' | 'Numpad6' | 'Numpad7' | 'Numpad8' | 'Numpad9' | 'NumpadAdd' | 'NumpadSubtract' | 'NumpadMultiply' | 'NumpadDivide'
   /** 辅助键 见[ExtraKey] */
   extra?: ExtraKey
 }
 /** 按键事件 (目标键 + 辅助键 + 按键状态) */
 export interface KeyEv {
-  /** 目标键 (可用值见 mapper 文件) */
-  key: string
+  /** 目标键 */
+  key: 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8' | 'F9' | 'F10' | 'F11' | 'F12' | 'Digit0' | 'Digit1' | 'Digit2' | 'Digit3' | 'Digit4' | 'Digit5' | 'Digit6' | 'Digit7' | 'Digit8' | 'Digit9' | 'KeyA' | 'KeyB' | 'KeyC' | 'KeyD' | 'KeyE' | 'KeyF' | 'KeyG' | 'KeyH' | 'KeyI' | 'KeyJ' | 'KeyK' | 'KeyL' | 'KeyM' | 'KeyN' | 'KeyO' | 'KeyP' | 'KeyQ' | 'KeyR' | 'KeyS' | 'KeyT' | 'KeyU' | 'KeyV' | 'KeyW' | 'KeyX' | 'KeyY' | 'KeyZ' | 'Meta' | 'Escape' | 'Tab' | 'CapsLock' | 'Shift' | 'Control' | 'Alt' | 'Space' | 'ArrowUp' | 'ArrowRight' | 'ArrowDown' | 'ArrowLeft' | 'Enter' | 'Backspace' | 'Delete' | 'Home' | 'PageUp' | 'PageDown' | 'End' | 'Backquote' | 'Minus' | 'Equal' | 'BracketLeft' | 'BracketRight' | 'Comma' | 'Period' | 'Semicolon' | 'Quote' | 'Slash' | 'BackSlash' | 'ShiftLeft' | 'ShiftRight' | 'ControlLeft' | 'ControlRight' | 'AltLeft' | 'AltRight' | 'Numpad0' | 'Numpad1' | 'Numpad2' | 'Numpad3' | 'Numpad4' | 'Numpad5' | 'Numpad6' | 'Numpad7' | 'Numpad8' | 'Numpad9' | 'NumpadAdd' | 'NumpadSubtract' | 'NumpadMultiply' | 'NumpadDivide'
   /** 辅助键 见[ExtraKey] */
   extra?: ExtraKey
   /** 是否是按下状态 (默认为 `false`) */
@@ -80,7 +80,7 @@ export class Observer {
   /** 移除已注册的监听 */
   offKey(keys: KeyEv): void
   /** 注册/更新对全部按键的监听事件 */
-  onKeyAll(callback: (err: null | Error, keycode: { key: string, down: bool }) => void): void
+  onKeyAll(callback: (err: null | Error, key_ev: { key: string, down: boolean }) => void): void
   /** 移除对全部按键的监听事件 */
   offKeyAll(): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */
