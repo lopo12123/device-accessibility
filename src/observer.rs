@@ -27,7 +27,7 @@ pub struct Observer {
 
 #[napi]
 impl Observer {
-    /// 跨线程调用安全测试
+    /// thread-safe function test
     #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
     pub fn tsfn_test(&self, callback: JsFunction) -> napi::Result<()> {
         let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
@@ -37,20 +37,20 @@ impl Observer {
 
         let fn1 = tsfn.clone();
         thread::spawn(move || {
-            fn1.call(Ok(String::from("子线程1 -- immediate")), ThreadsafeFunctionCallMode::NonBlocking);
+            fn1.call(Ok(String::from("thread1 -- immediate")), ThreadsafeFunctionCallMode::NonBlocking);
         });
 
         let fn2 = tsfn.clone();
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(1));
-            fn2.call(Ok(String::from("子线程2 -- sleep 1s")), ThreadsafeFunctionCallMode::NonBlocking);
+            fn2.call(Ok(String::from("thread2 -- sleep 1s")), ThreadsafeFunctionCallMode::NonBlocking);
         });
 
         let fn3 = tsfn.clone();
         thread::spawn(move || {
             thread::sleep(Duration::from_secs(2));
-            fn3.call(Ok(String::from("子线程3 -- sleep 2s")), ThreadsafeFunctionCallMode::NonBlocking);
-            fn3.call(Ok(String::from("子线程3 -- sleep 2s -- 多次调用")), ThreadsafeFunctionCallMode::NonBlocking);
+            fn3.call(Ok(String::from("thread3 -- sleep 2s")), ThreadsafeFunctionCallMode::NonBlocking);
+            fn3.call(Ok(String::from("thread3 -- sleep 2s -- multiple call")), ThreadsafeFunctionCallMode::NonBlocking);
         });
 
         Ok(())
