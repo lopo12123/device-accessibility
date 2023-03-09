@@ -111,7 +111,7 @@ impl Observer {
             });
 
             // 按键释放监听
-            let _guard = DeviceState::new().on_key_down(move |keycode| {
+            let _guard = DeviceState::new().on_key_up(move |keycode| {
                 // 对全部事件的监听
                 match key_cb_up.lock().unwrap().deref() {
                     Some(cb) => {
