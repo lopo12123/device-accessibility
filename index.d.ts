@@ -69,18 +69,18 @@ export class Controller {
 }
 export class Observer {
   /** thread-safe function test */
-  tsfnTest(callback: (err: null | Error, result: string) => void): void
+  tsfnTest(callback: (err: null | Error) => void): void
   constructor()
   /** 检查键名是否合法 */
   checkKey(key: string): boolean
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeys(): Array<KeyEv>
   /** 注册/更新按键监听事件 (支持组合键) */
-  onKey(keys: KeyEv, callback: (...args: any[]) => any): void
+  onKey(keys: KeyEv, callback: (err: null | Error) => void): void
   /** 移除已注册的监听 */
   offKey(keys: KeyEv): void
   /** 注册/更新对全部按键的监听事件 */
-  onKeyAll(callback: (err: null | Error, keycode: string) => void): void
+  onKeyAll(callback: (err: null | Error, keycode: { key: string, down: bool }) => void): void
   /** 移除对全部按键的监听事件 */
   offKeyAll(): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */

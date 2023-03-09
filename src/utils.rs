@@ -1,5 +1,3 @@
-use device_query::{Keycode as DQKey};
-
 /// 辅助键 (ctrl / shift / alt 中的 0/1/2/3 个)
 #[napi(object)]
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]

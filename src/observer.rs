@@ -33,8 +33,8 @@ pub struct Observer {
 #[napi]
 impl Observer {
     /// thread-safe function test
-    #[napi(ts_args_type = "callback: (err: null | Error, result: string) => void")]
-    pub fn tsfn_test(&self, callback: JsFunction) -> napi::Result<()> {
+    #[napi]
+    pub fn tsfn_test(&self, #[napi(ts_arg_type = "(err: null | Error) => void")] callback: JsFunction) -> napi::Result<()> {
         let tsfn: ThreadsafeFunction<String, ErrorStrategy::CalleeHandled> = callback
             .create_threadsafe_function(0, |ctx| {
                 Ok(vec![ctx.value])
@@ -206,8 +206,8 @@ impl Observer {
     }
 
     /// 注册/更新按键监听事件 (支持组合键)
-    #[napi(ts_args_type = "callback: (err: null | Error) => void")]
-    pub fn on_key(&mut self, keys: KeyEv, callback: JsFunction) -> napi::Result<()> {
+    #[napi]
+    pub fn on_key(&mut self, keys: KeyEv, #[napi(ts_arg_type = "(err: null | Error) => void")] callback: JsFunction) -> napi::Result<()> {
         if self.check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
 
@@ -235,8 +235,8 @@ impl Observer {
     }
 
     /// 注册/更新对全部按键的监听事件
-    #[napi(ts_args_type = "callback: (err: null | Error, keycode: { key: string, down: bool }) => void")]
-    pub fn on_key_all(&self, callback: JsFunction) -> napi::Result<()> {
+    #[napi]
+    pub fn on_key_all(&self, #[napi(ts_arg_type = "(err: null | Error, key_ev: { key: string, down: boolean }) => void")] callback: JsFunction) -> napi::Result<()> {
         let tsfn = callback.create_threadsafe_function(0, |ctx| {
             Ok(vec![ctx.value])
         })?;
