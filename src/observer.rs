@@ -13,7 +13,7 @@ use napi::threadsafe_function::{
     ThreadsafeFunctionCallMode,
 };
 use crate::mapper::DQMapper;
-use crate::utils::{ExtraKey, KeyEv, KeyEvRegister};
+use crate::utils::{KeyEv, KeyEvRegister};
 
 /// 子线程检查间隔 -- ms
 const LOOP_GAP: u64 = 1000;
@@ -206,7 +206,7 @@ impl Observer {
     }
 
     /// 注册/更新按键监听事件 (支持组合键)
-    #[napi]
+    #[napi(ts_args_type = "callback: (err: null | Error) => void")]
     pub fn on_key(&mut self, keys: KeyEv, callback: JsFunction) -> napi::Result<()> {
         if self.check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
@@ -235,7 +235,7 @@ impl Observer {
     }
 
     /// 注册/更新对全部按键的监听事件
-    #[napi(ts_args_type = "callback: (err: null | Error, keycode: string) => void")]
+    #[napi(ts_args_type = "callback: (err: null | Error, keycode: { key: string, down: bool }) => void")]
     pub fn on_key_all(&self, callback: JsFunction) -> napi::Result<()> {
         let tsfn = callback.create_threadsafe_function(0, |ctx| {
             Ok(vec![ctx.value])
