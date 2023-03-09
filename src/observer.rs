@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use device_query::{
     DeviceState, DeviceEvents,
 };
-use napi::{JsFunction};
+use napi::{Error, JsFunction, Status};
 use napi::threadsafe_function::{
     ErrorStrategy,
     ThreadsafeFunction,
@@ -142,6 +142,15 @@ impl Observer {
         instance
     }
 
+    /// 检查键名是否合法
+    #[napi]
+    pub fn check_key(&self, key: String) -> napi::Result<bool> {
+        match DQMapper::decode_key(key) {
+            Some(_) => Ok(true),
+            None => Ok(false)
+        }
+    }
+
     /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
     #[napi(getter)]
     pub fn registered_keys(&self) -> napi::Result<Vec<KeyEv>> {
@@ -158,23 +167,27 @@ impl Observer {
     /// 注册/更新按键监听事件 (支持组合键)
     #[napi]
     pub fn on_key(&mut self, keys: KeyEv, callback: JsFunction) -> napi::Result<()> {
-        let mut evs = self.key_evs.lock().unwrap();
-
-        evs.insert(keys, callback.create_threadsafe_function(0, |ctx| {
-            Ok(vec![ctx.value])
-        })?);
-
-        Ok(())
+        if self.check_key(keys.key.clone()).unwrap() {
+            let mut evs = self.key_evs.lock().unwrap();
+            evs.insert(keys, callback.create_threadsafe_function(0, |ctx| {
+                Ok(vec![ctx.value])
+            })?);
+            Ok(())
+        } else {
+            Err(Error::new(Status::InvalidArg, format!("Invalid Key!")))
+        }
     }
 
     /// 移除已注册的监听
     #[napi]
     pub fn off_key(&mut self, keys: KeyEv) -> napi::Result<()> {
-        let mut evs = self.key_evs.lock().unwrap();
-
-        evs.remove(&keys);
-
-        Ok(())
+        if self.check_key(keys.key.clone()).unwrap() {
+            let mut evs = self.key_evs.lock().unwrap();
+            evs.remove(&keys);
+            Ok(())
+        } else {
+            Err(Error::new(Status::InvalidArg, format!("Invalid Key!")))
+        }
     }
 
     /// 注册/更新对全部按键的监听事件
@@ -200,14 +213,17 @@ impl Observer {
     /// 主动触发已注册的按键事件 (返回值表示该组合键是否已注册)
     #[napi]
     pub fn touch(&self, keys: KeyEv) -> napi::Result<bool> {
-        let evs = self.key_evs.lock().unwrap();
-
-        match evs.get(&keys) {
-            Some(tsfn) => {
-                tsfn.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
-                Ok(true)
+        if self.check_key(keys.key.clone()).unwrap() {
+            let evs = self.key_evs.lock().unwrap();
+            match evs.get(&keys) {
+                Some(tsfn) => {
+                    tsfn.call(Ok(()), ThreadsafeFunctionCallMode::NonBlocking);
+                    Ok(true)
+                }
+                None => Ok(false)
             }
-            None => Ok(false)
+        } else {
+            Err(Error::new(Status::InvalidArg, format!("Invalid Key!")))
         }
     }
 
