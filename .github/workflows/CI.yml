@@ -152,7 +152,7 @@ jobs:
             ${{ env.APP_NAME }}.*.node
             index.d.ts
             index.js
-            __test.ts
+            __test__.ts
           if-no-files-found: error
 
 #  build-freebsd:
