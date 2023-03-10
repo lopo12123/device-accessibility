@@ -12,6 +12,7 @@ use napi::threadsafe_function::{
     ThreadsafeFunction,
     ThreadsafeFunctionCallMode,
 };
+use crate::check_key;
 use crate::mapper::DQMapper;
 use crate::utils::{KeyEv, KeyEvRegister};
 
@@ -183,15 +184,6 @@ impl Observer {
         instance
     }
 
-    /// 检查键名是否合法
-    #[napi]
-    pub fn check_key(&self, key: String) -> napi::Result<bool> {
-        match DQMapper::decode_key(key) {
-            Some(_) => Ok(true),
-            None => Ok(false)
-        }
-    }
-
     /// 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复)
     #[napi(getter)]
     pub fn registered_keys(&self) -> napi::Result<Vec<KeyEv>> {
@@ -208,7 +200,7 @@ impl Observer {
     /// 注册/更新按键监听事件 (支持组合键)
     #[napi]
     pub fn on_key(&mut self, keys: KeyEv, #[napi(ts_arg_type = "(err: null | Error) => void")] callback: JsFunction) -> napi::Result<()> {
-        if self.check_key(keys.key.clone()).unwrap() {
+        if check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
 
             let register_ev = KeyEvRegister::from_key_ev(keys);
@@ -224,7 +216,7 @@ impl Observer {
     /// 移除已注册的监听
     #[napi]
     pub fn off_key(&mut self, keys: KeyEv) -> napi::Result<()> {
-        if self.check_key(keys.key.clone()).unwrap() {
+        if check_key(keys.key.clone()).unwrap() {
             let mut evs = self.key_evs.lock().unwrap();
             let register_ev = KeyEvRegister::from_key_ev(keys);
             evs.remove(&register_ev);
@@ -236,7 +228,7 @@ impl Observer {
 
     /// 注册/更新对全部按键的监听事件
     #[napi]
-    pub fn on_key_all(&self, #[napi(ts_arg_type = "(err: null | Error, key_ev: { key: string, down: boolean }) => void")] callback: JsFunction) -> napi::Result<()> {
+    pub fn on_key_all(&self, #[napi(ts_arg_type = "(err: null | Error, key_ev: { key: KeyEv['key'], down: boolean }) => void")] callback: JsFunction) -> napi::Result<()> {
         let tsfn = callback.create_threadsafe_function(0, |ctx| {
             Ok(vec![ctx.value])
         })?;
@@ -257,7 +249,7 @@ impl Observer {
     /// 主动触发已注册的按键事件 (返回值表示该组合键是否已注册)
     #[napi]
     pub fn touch(&self, keys: KeyEv) -> napi::Result<bool> {
-        if self.check_key(keys.key.clone()).unwrap() {
+        if check_key(keys.key.clone()).unwrap() {
             let evs = self.key_evs.lock().unwrap();
             let register_ev = KeyEvRegister::from_key_ev(keys);
             match evs.get(&register_ev) {

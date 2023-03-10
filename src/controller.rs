@@ -1,4 +1,4 @@
-use enigo::{Enigo, Key as EnigoKey, MouseButton as EnigoMouse, KeyboardControllable, MouseControllable};
+use enigo::{Enigo, Key as EnigoKey, KeyboardControllable, MouseControllable};
 use napi::{Error, Status};
 
 use crate::mapper::EnigoMapper;
@@ -16,7 +16,7 @@ impl Controller {
 
     /// 键盘 -- 按下
     #[napi]
-    pub fn key_down(&self, key: String) -> napi::Result<()> {
+    pub fn key_down(&self, #[napi(ts_arg_type = "KeyCombination['key']")] key: String) -> napi::Result<()> {
         match EnigoMapper::decode_key(key) {
             Some(_key) => {
                 Enigo::new().key_down(_key);
@@ -28,7 +28,7 @@ impl Controller {
 
     /// 键盘 -- 释放
     #[napi]
-    pub fn key_up(&self, key: String) -> napi::Result<()> {
+    pub fn key_up(&self, #[napi(ts_arg_type = "KeyCombination['key']")] key: String) -> napi::Result<()> {
         match EnigoMapper::decode_key(key) {
             Some(_key) => {
                 Enigo::new().key_up(_key);
@@ -103,7 +103,7 @@ impl Controller {
 
     /// 鼠标 -- 按下
     #[napi]
-    pub fn mouse_down(&self, key: String) -> napi::Result<()> {
+    pub fn mouse_down(&self, #[napi(ts_arg_type = "MouseEv['key']")] key: String) -> napi::Result<()> {
         match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_down(_key);
@@ -115,7 +115,7 @@ impl Controller {
 
     /// 鼠标 -- 释放
     #[napi]
-    pub fn mouse_up(&self, key: String) -> napi::Result<()> {
+    pub fn mouse_up(&self, #[napi(ts_arg_type = "MouseEv['key']")] key: String) -> napi::Result<()> {
         match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_up(_key);
@@ -127,7 +127,7 @@ impl Controller {
 
     /// 鼠标 -- 点击 (即 `mouse_down - 20ms - mouse_up`)
     #[napi]
-    pub fn mouse_click(&self, key: String) -> napi::Result<()> {
+    pub fn mouse_click(&self, #[napi(ts_arg_type = "MouseEv['key']")] key: String) -> napi::Result<()> {
         match EnigoMapper::decode_mouse(key) {
             Some(_key) => {
                 Enigo::new().mouse_click(_key);

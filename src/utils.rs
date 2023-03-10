@@ -1,5 +1,3 @@
-use napi::Either;
-
 /// 辅助键 (ctrl / shift / alt 中的 0/1/2/3 个)
 #[napi(object)]
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]
@@ -87,6 +85,16 @@ impl KeyEvRegister {
             down: Some(self.5),
         }
     }
+}
+
+/// 鼠标事件 (目标键 + 按键状态)
+#[napi(object)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+pub struct MouseEv {
+    #[napi(ts_type = "'Left' | 'Middle' | 'Right'")]
+    pub key: String,
+    /// 是否是按下状态 (默认为 `false`)
+    pub down: Option<bool>,
 }
 
 /// 坐标
