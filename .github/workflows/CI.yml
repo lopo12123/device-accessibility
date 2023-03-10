@@ -153,6 +153,7 @@ jobs:
             index.d.ts
             index.js
             __test__.ts
+            examples/
           if-no-files-found: error
 
 #  build-freebsd:
