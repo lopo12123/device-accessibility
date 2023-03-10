@@ -147,12 +147,14 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: bindings-${{ matrix.settings.target }}
+          name: assets-bundle
           path: |
             ${{ env.APP_NAME }}.*.node
             index.d.ts
             index.js
+            __test.ts
           if-no-files-found: error
+
 #  build-freebsd:
 #    runs-on: macos-12
 #    name: Build FreeBSD
@@ -203,6 +205,7 @@ jobs:
 #          name: bindings-freebsd
 #          path: ${{ env.APP_NAME }}.*.node
 #          if-no-files-found: error
+
 #  test-macOS-windows-binding:
 #    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
 #    needs:
@@ -238,6 +241,7 @@ jobs:
 #        shell: bash
 #      - name: Test bindings
 #        run: yarn test
+
 #  test-linux-x64-gnu-binding:
 #    name: Test bindings on Linux-x64-gnu - node@${{ matrix.node }}
 #    needs:
@@ -270,6 +274,7 @@ jobs:
 #        shell: bash
 #      - name: Test bindings
 #        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-slim yarn test
+
 #  test-linux-x64-musl-binding:
 #    name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
 #    needs:
@@ -304,6 +309,7 @@ jobs:
 #        shell: bash
 #      - name: Test bindings
 #        run: docker run --rm -v $(pwd):/build -w /build node:${{ matrix.node }}-alpine yarn test
+
 #  test-linux-aarch64-gnu-binding:
 #    name: Test bindings on aarch64-unknown-linux-gnu - node@${{ matrix.node }}
 #    needs:
@@ -345,6 +351,7 @@ jobs:
 #            set -e
 #            yarn test
 #            ls -la
+
 #  test-linux-aarch64-musl-binding:
 #    name: Test bindings on aarch64-unknown-linux-musl - node@${{ matrix.node }}
 #    needs:
@@ -378,6 +385,7 @@ jobs:
 #          run: |
 #            set -e
 #            yarn test
+
 #  test-linux-arm-gnueabihf-binding:
 #    name: Test bindings on armv7-unknown-linux-gnueabihf - node@${{ matrix.node }}
 #    needs:
@@ -418,6 +426,7 @@ jobs:
 #            set -e
 #            yarn test
 #            ls -la
+
 #  universal-macOS:
 #    name: Build universal macOS binary
 #    needs:
@@ -451,6 +460,7 @@ jobs:
 #          name: bindings-universal-apple-darwin
 #          path: ${{ env.APP_NAME }}.*.node
 #          if-no-files-found: error
+
 #  publish:
 #    name: Publish
 #    runs-on: ubuntu-latest
