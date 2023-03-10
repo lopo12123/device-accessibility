@@ -17,7 +17,7 @@ use crate::mapper::DQMapper;
 use crate::utils::{KeyEv, KeyEvRegister};
 
 /// 子线程检查间隔 -- ms
-const LOOP_GAP: u64 = 1000;
+const LOOP_GAP: u64 = 100;
 
 #[napi]
 pub struct Observer {
@@ -164,7 +164,6 @@ impl Observer {
             // 监听结束判断
             while *signal.lock().unwrap() {
                 thread::sleep(Duration::from_millis(LOOP_GAP));
-                println!("tick");
             };
 
             println!("listen finished.")
