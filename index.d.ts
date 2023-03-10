@@ -28,6 +28,12 @@ export interface KeyEv {
   /** 是否是按下状态 (默认为 `false`) */
   down?: boolean
 }
+/** 鼠标事件 (目标键 + 按键状态) */
+export interface MouseEv {
+  key: 'Left' | 'Middle' | 'Right'
+  /** 是否是按下状态 (默认为 `false`) */
+  down?: boolean
+}
 /** 坐标 */
 export interface MouseLocation {
   /** x 方向 (`i32`) */
@@ -35,23 +41,27 @@ export interface MouseLocation {
   /** y 方向 (`i32`) */
   y: number
 }
+/** 检查键盘按键名是否合法 */
+export function checkKey(key: string): boolean
+/** 检查鼠标按键名是否合法 */
+export function checkMouse(key: string): boolean
 export function helloworld(): string
 export class Controller {
   constructor()
   /** 键盘 -- 按下 */
-  keyDown(key: string): void
+  keyDown(key: KeyCombination['key']): void
   /** 键盘 -- 释放 */
-  keyUp(key: string): void
+  keyUp(key: KeyCombination['key']): void
   /** 键盘 -- 点击 (即 `key_down - 20ms - key_up`) */
   keyClick(keys: KeyCombination): void
   /** 键盘 -- 输入 */
   keyType(sentence: string): void
   /** 鼠标 -- 按下 */
-  mouseDown(key: string): void
+  mouseDown(key: MouseEv['key']): void
   /** 鼠标 -- 释放 */
-  mouseUp(key: string): void
+  mouseUp(key: MouseEv['key']): void
   /** 鼠标 -- 点击 (即 `mouse_down - 20ms - mouse_up`) */
-  mouseClick(key: string): void
+  mouseClick(key: MouseEv['key']): void
   /**
    * 鼠标 -- 滚动
    * `scale`: 整数. 正向左/上, 负向右/下
@@ -71,8 +81,6 @@ export class Observer {
   /** thread-safe function test */
   tsfnTest(callback: (err: null | Error) => void): void
   constructor()
-  /** 检查键名是否合法 */
-  checkKey(key: string): boolean
   /** 已注册的按键事件 (使用数组返回, 其值可视为集合, 无重复) */
   get registeredKeys(): Array<KeyEv>
   /** 注册/更新按键监听事件 (支持组合键) */
@@ -80,7 +88,7 @@ export class Observer {
   /** 移除已注册的监听 */
   offKey(keys: KeyEv): void
   /** 注册/更新对全部按键的监听事件 */
-  onKeyAll(callback: (err: null | Error, key_ev: { key: string, down: boolean }) => void): void
+  onKeyAll(callback: (err: null | Error, key_ev: { key: KeyEv['key'], down: boolean }) => void): void
   /** 移除对全部按键的监听事件 */
   offKeyAll(): void
   /** 主动触发已注册的按键事件 (返回值表示该组合键是否已注册) */

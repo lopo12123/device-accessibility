@@ -246,8 +246,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Controller, Observer, helloworld } = nativeBinding
+const { Controller, Observer, checkKey, checkMouse, helloworld } = nativeBinding
 
 module.exports.Controller = Controller
 module.exports.Observer = Observer
+module.exports.checkKey = checkKey
+module.exports.checkMouse = checkMouse
 module.exports.helloworld = helloworld
