@@ -9,8 +9,6 @@ pub mod utils;
 pub mod controller;
 pub mod observer;
 
-mod macros;
-
 /// 检查键盘按键名是否合法
 #[napi]
 pub fn check_key(key: String) -> napi::Result<bool> {
