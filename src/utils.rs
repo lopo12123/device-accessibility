@@ -107,6 +107,30 @@ pub struct MouseLocation {
     pub y: i32,
 }
 
+/// 图像数据
+#[napi(object)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+pub struct RawImage {
+    /// 图像原始宽度
+    pub w: u32,
+    /// 图像原始高度
+    pub h: u32,
+    /// 图像字节
+    pub bytes: Vec<u8>,
+}
+
+/// 剪切板单项的存储结构
+#[napi(object)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+pub struct ClipboardItem {
+    /// 是否是图像 (true -- 图像; false -- 文本)
+    pub is_image: bool,
+    /// 文本数据 (`is_image` 为 `true` 时为 null)
+    pub text_data: Option<String>,
+    /// 图像数据 (`is_image` 为 `false` 时为 null)
+    pub image_data: Option<RawImage>,
+}
+
 
 #[cfg(test)]
 mod test {

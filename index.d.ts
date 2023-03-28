@@ -41,6 +41,24 @@ export interface MouseLocation {
   /** y 方向 (`i32`) */
   y: number
 }
+/** 图像数据 */
+export interface RawImage {
+  /** 图像原始宽度 */
+  w: number
+  /** 图像原始高度 */
+  h: number
+  /** 图像字节 */
+  bytes: Array<number>
+}
+/** 剪切板单项的存储结构 */
+export interface ClipboardItem {
+  /** 是否是图像 (true -- 图像; false -- 文本) */
+  isImage: boolean
+  /** 文本数据 (`is_image` 为 `true` 时为 null) */
+  textData?: string
+  /** 图像数据 (`is_image` 为 `false` 时为 null) */
+  imageData?: RawImage
+}
 /** 检查键盘按键名是否合法 */
 export function checkKey(key: string): boolean
 /** 检查鼠标按键名是否合法 */
@@ -95,4 +113,49 @@ export class Observer {
   touch(keys: KeyEv): boolean
   /** 结束监听 (必须调用! 否则会由于过度持有引用造成内存泄露) */
   dispose(): void
+}
+export class Clipboard {
+  /** 队列的当前长度 */
+  get len(): number
+  /** 队列的最大长度 */
+  get maxLen(): number
+  /** 当前的存储队列 */
+  get records(): Array<ClipboardItem>
+  constructor(length: number)
+  /**
+   * Synchronize latest item from system clipboard.
+   *
+   * Return the latest item read from system clipboard.
+   */
+  sync(): ClipboardItem
+  /** Get the item at `offset` (default to `0`) in the queue, `offset` equal to zero means the most recent item. */
+  getItem(offset?: number | undefined | null): ClipboardItem
+  /** Get the text at `offset` (default to `0`) in the queue, `offset` equal to zero means the most recent text. */
+  getText(offset?: number | undefined | null): string
+  /**
+   * Get the image at `offset` (default to `0`) in the queue, `offset` equal to zero means the most recent image.
+   *
+   * Here are two example situation where the user would copy the pixel values.
+   * - When you right click on an image in a browser and then click on "Copy image" (works in Firefox and Chrome)
+   * - When you select an area of an image in an image editor software and press `Control(Command)+C`
+   */
+  getImage(offset?: number | undefined | null): RawImage
+  /**
+   * Put an item at the head of the queue, if the queue reaches the maximum length, the last item will be discarded.
+   *
+   * Return new length of the queue.
+   */
+  putItem(item: ClipboardItem): number
+  /**
+   * Put an text at the head of the queue, if the queue reaches the maximum length, the last item will be discarded.
+   *
+   * Return new length of the queue.
+   */
+  putText(text: string): number
+  /**
+   * Put an image at the head of the queue, if the queue reaches the maximum length, the last item will be discarded.
+   *
+   * Return new length of the queue.
+   */
+  putImage(image: RawImage): number
 }

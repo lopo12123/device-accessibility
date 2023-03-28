@@ -8,6 +8,7 @@ mod mapper;
 pub mod utils;
 pub mod controller;
 pub mod observer;
+pub mod clipboard;
 
 /// 检查键盘按键名是否合法
 #[napi]
