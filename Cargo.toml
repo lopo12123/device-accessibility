@@ -15,6 +15,7 @@ napi-derive = "2.11.0"
 device_query = "1.1.1"
 enigo = { git = "https://github.com/enigo-rs/enigo.git" }
 rdev = "0.5.2"
+screenshots = { version = "0.6.0" }
 
 [build-dependencies]
 napi-build = "2.0.1"

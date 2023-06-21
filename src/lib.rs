@@ -9,6 +9,7 @@ pub mod utils;
 pub mod controller;
 pub mod observer;
 pub mod clipboard;
+pub mod capture;
 
 /// 检查键盘按键名是否合法
 #[napi]
