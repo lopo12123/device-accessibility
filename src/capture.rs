@@ -9,8 +9,8 @@ pub fn capture_all() -> Vec<Vec<u8>> {
     let mut shoots: Vec<Vec<u8>> = vec![];
 
     for screen in screens {
-        let mut image = screen.capture().unwrap();
-        let mut buffer = image.to_png().unwrap();
+        let image = screen.capture().unwrap();
+        let buffer = image.to_png().unwrap();
         shoots.push(buffer);
     }
 
